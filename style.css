@@ -1,0 +1,63 @@
+.wrapper{
+    display: flex;
+    justify-content: center;
+}
+body{
+    background: #000000eb;
+    color: #25d425;
+}
+.tetris-container{
+    position: relative;
+    margin-right: 2rem;
+    transition: all 1s ease-in;
+}
+.current-container{
+    position: relative;
+    border: 8px black solid;
+    margin-right: 2rem;
+}
+div[id^="square_"], div[id^="next_"]{
+    transition: background 0.15s ease-in;
+    border: solid 1px #d3cccc;
+    box-shadow: inset 0 0 1px 1px;
+}
+div[id^="row_"]{
+    height: 20px;
+}
+.tetris-next-container{
+    position: relative;
+}
+.reset-button{
+    margin-top: 2rem;
+    width: 100px;
+    height: 30px;
+    background-color:rgba(127, 59, 231, 0.89);
+    color: #101076;
+    font-weight: bold;
+    font-size: 22px;
+}
+.flex-column-container{
+    display:flex;
+    flex-direction: column;
+}
+
+.tetris-score{
+    margin-right: 2rem;
+}
+#score{
+    text-align: center;
+}
+.animation-target {
+    -webkit-animation: animation 800ms linear both;
+    animation: animation 800ms linear both;
+  }
+
+  @keyframes animation { 
+    0%   {opacity: 1; }
+    25%  {opacity: 0.8;}
+    50%  {opacity: 0.7;}
+    75%  {opacity: 0.6; }
+    100%  {opacity: 0.4;}
+  }
+  
+  
