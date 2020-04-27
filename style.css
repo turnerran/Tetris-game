@@ -17,7 +17,7 @@ body{
     margin-right: 2rem;
 }
 div[id^="square_"], div[id^="next_"]{
-    transition: background 0.15s ease-in;
+    transition: background 0.20s ease-in;
     border: solid 1px #d3cccc;
     box-shadow: inset 0 0 1px 1px;
 }

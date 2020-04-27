@@ -24,6 +24,12 @@ const squareTypes = {
     done: 4
 }
 
+const collideType = {
+    bottomOrTetris: 0,
+    notCollide: 1,
+    ceiling : 2
+}
+
 for (let x = 0; x < width; x++) {
     gameBoard[x] = new Array(height).fill(squareTypes.background);
 }
@@ -96,8 +102,11 @@ for (let y = 0; y < 3; y++) {
 nextContainer.style.width =  3 * square_size + "px";
 nextContainer.style.height =  3 * square_size  + "px";
 
+let isGameOver = false;
+
 let currentScore = 0;
 const bonusScore = 500;
+const animationTime = 800;
 
 let position = { x: width / 2 - 1, y: 0 };
 const direction = {left: 0, right: 1, bottom: 2};
@@ -134,25 +143,18 @@ function getColorByType(type = "current"){
     switch (tetrisColor) {
         case A:
             return "currentA"
-            break;
         case B:
             return "currentB"
-            break;
         case C:
             return "currentC"
-            break;
         case D:
             return "currentD"
-            break;
         case E:
             return "currentE"
-            break;
         case F:
             return "currentF"
-            break;
         case G:
             return "currentG"
-            break;
       }
 }
 function update_next() {
@@ -164,47 +166,61 @@ function update_next() {
         : (square.style.background = color.background);
     }
 }
-// function update_current() {
-//     const currentColor = getColorByType();
-//     for (let i = 0; i < 9; i++) {
-//         let square = document.getElementById("current_container_" + i);
-//         current[i] === 1
-//         ? (square.style.background = color[currentColor])
-//         : (square.style.background = color.background);
-//     }
-// }
+
 function resetPreviousCurrent(){
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            let currentPosition = gameBoard[x][y];
-            if (currentPosition === squareTypes.current){
+            if (gameBoard[x][y] === squareTypes.current){
+                const square = getSquareByXandY(x,y)
                 gameBoard[x][y] = squareTypes.background;
-                const square = document.getElementById("square_x" + x + "y" + y);
                 square.style.background = color.background;
             }
         }
     }
 }
-function animateDoneRow(row){
+
+function getSquareByXandY(x,y){
+    return document.getElementById("square_x" + x + "y" + y);
+}
+
+function animateDoneRow(){
+    let timer = 0;
     const classname = "animation-target";
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
             let rowElement = document.getElementById("row_" + y);
             const block_type = gameBoard[x][y];
-            if (y === row && block_type === squareTypes.done) {
+            if (block_type === squareTypes.done || block_type === squareTypes.current) {
+                // timer += animationTime;
+                setTimeout(() => {
                     rowElement.classList.toggle(classname);
-                    setTimeout(function() {
+                    setTimeout(() => {
                         rowElement.classList.toggle(classname);
-                    }, 800);
+                    }, animationTime);
+                }, timer);
                 break;
             }
         }
     }
 }
+function countNumberOfActiveRows(){
+    let count = 0;
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            let rowElement = document.getElementById("row_" + y);
+            const block_type = gameBoard[x][y];
+            if (block_type === squareTypes.done || block_type === squareTypes.current) {
+                count += 1;
+                break;
+            }
+        }
+    }
+    return count;
+}
 function drawDoneState(){
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            let square = document.getElementById("square_x" + x + "y" + y);
+            let square = getSquareByXandY(x,y)
             const block_type = gameBoard[x][y];
             if (block_type === squareTypes.background || block_type === squareTypes.current) {
                 square.style.background = color.background;
@@ -218,27 +234,32 @@ function drawDoneState(){
         }
     }
 }
-function copyAboveRow(){
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            let square = document.getElementById("square_x" + x + "y" + y);
-            const block_type = gameBoard[x][y];
-            if (block_type === squareTypes.background || block_type === squareTypes.current) {
-                square.style.background = color.background;
+function copyAboveRow(row){
+    for (let y = row; y > 0; y--){
+        for (let x = width - 1; x > 0 ; x--){
+            if (gameBoard[x][y] === squareTypes.bottom){
+                break;
             }
-            if (block_type === squareTypes.done) {
-                // square.style.background = color.completed;
+            let square = getSquareByXandY(x, y)
+            let aboveSquare = getSquareByXandY(x, y - 1)
+            if (gameBoard[x][y] === squareTypes.current){
+                gameBoard[x][y] = squareTypes.done;
             }
-            if (block_type === squareTypes.wall || block_type === squareTypes.bottom) {
-            square.style.background = color.wall;
-            }   
+            gameBoard[x][y] = gameBoard[x][y - 1];
+            square.style.background = aboveSquare.style.background;
         }
     }
 }
 function resetBoard(){
+    drawCleanBoard()
+    initAndCreateNewTetrises();
+    updateScore(0);
+}
+
+function drawCleanBoard(){
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            let square = document.getElementById("square_x" + x + "y" + y);
+            let square = getSquareByXandY(x,y)
             const block_type = gameBoard[x][y];
             if (block_type === squareTypes.current || block_type === squareTypes.done) {
                 square.style.background = color.background;
@@ -246,12 +267,16 @@ function resetBoard(){
             }
         }
     }
-    initAndCreateNewTetrises();
 }
-function resetBoth(){
+
+function resetAll(){
     initAndCreateNewTetrises();
-    drawDoneState();
+    makeMove();
+    resetBoard();
+    updateScore(0);
+    makeMove();
 }
+
 function initAndCreateNewTetrises(){
     setInitialPosition();
     current = make_random();
@@ -260,24 +285,22 @@ function initAndCreateNewTetrises(){
     }
     while (next === current)
     update_next();
-    // update_current();
-    drawTetris();
 }
+
 function setInitialPosition(){
     position.x = width / 2 - 1;
     position.y = 0;
 }
+
 function CheckAndActIfFullRow(){
     let shouldCopy = false;
-    let row;
     for (let y = height - 1; y >= 0 && !shouldCopy; y--){
         var isoneDone = false;
         for (let x = width - 1; x >= 0 ; x--){
-            if (gameBoard[x][y] !== squareTypes.wall && gameBoard[x][y] !== squareTypes.bottom &&
-                gameBoard[x][y] !== squareTypes.done){
+            if (gameBoard[x][y] === squareTypes.background){
                     break;
             }
-            else if (gameBoard[x][y] === squareTypes.done){
+            else if (gameBoard[x][y] === squareTypes.done || gameBoard[x][y] === squareTypes.current){
                 isoneDone = true;
             }
             if (x === 0 && isoneDone){
@@ -286,27 +309,21 @@ function CheckAndActIfFullRow(){
             }
         }
     }
+ 
     if (shouldCopy){
-        for (let y = row; y > 0; y--){
-            for (let x = width - 1; x > 0 ; x--){
-                if (gameBoard[x][y] === squareTypes.bottom){
-                    break;
-                }
-                if (gameBoard[x][y] === squareTypes.current){
-                    gameBoard[x][y] = squareTypes.done;
-                }
-                gameBoard[x][y] = gameBoard[x][y - 1];
-            }
-        }
-        animateDoneRow(row)
+        markCurrentAsDone();
+        animateDoneRow();
         setTimeout(() => {
+            copyAboveRow(row);
             drawDoneState();
-            initAndCreateNewTetrises();
-        }, 800);
+            markCurrentAndNextTetris();
+            drawCurrentTetris();
+        }, animationTime);
     }
     return shouldCopy;
 }
-function drawTetris(step = null) {
+
+function makeMove(step = null) {
     let nextStep;
     let bottomEdge = current.some( (value,index) => index > 5 && value === 1);
     let leftEdge = current.some( (value,index) => (index === 0 || index === 3 || index === 6) && value === 1);
@@ -335,6 +352,25 @@ function drawTetris(step = null) {
     if (step != null){
         resetPreviousCurrent();
     }
+    drawCurrentTetris();
+    const collisionType = didCollide(x,y);
+    var isFull = CheckAndActIfFullRow();
+    if (!isFull && collisionType === collideType.bottomOrTetris){
+        resetPreviousCurrent();
+        markCurrentAsDone();
+        markCurrentAndNextTetris();
+        drawCurrentTetris();
+    }
+    if (collisionType === collideType.bottomOrTetris){
+        addPoints(isFull);
+    }
+    if (collisionType === collideType.ceiling){
+        resetAll();
+    }
+}
+function drawCurrentTetris(){
+    const x = position.x;
+    const y = position.y;
     const currentColor = getColorByType();
     for(var i = 0; i < 3;i++){
         for (var j = 0; j < 3; j++){
@@ -342,43 +378,38 @@ function drawTetris(step = null) {
             const currY = y + i;
             const position = j + (i * 3);
             if (current[position] === 1){
-                let square = document.getElementById("square_x" + currX + "y" + currY);
+                let square = getSquareByXandY(currX, currY);
                 square.style.background = color[currentColor];
                 gameBoard[currX][currY] = squareTypes.current;
             } 
         }
     }
-    let didCollide = false;
-    for(var i = 0; i < 3 && !didCollide;i++){
-        for (var j = 0; j < 3 && !didCollide; j++){
+}
+function didCollide(x,y){
+    let collisionType = collideType.notCollide;
+    for(var i = 0; i < 3 && collisionType === collideType.notCollide ;i++){
+        for (var j = 0; j < 3 && collisionType === collideType.notCollide; j++){
             const currX = x - 1 + j;
             const currY = y + i;
             const nextDownStep = gameBoard[currX][currY + 1];
             const position = j + (i * 3);
             if (current[position] === 1){
                 if (nextDownStep === squareTypes.bottom || nextDownStep === squareTypes.done){
-                    didCollide = true;
-                    if (currY - i <= 0){
+                    collisionType = collideType.bottomOrTetris;
+                    if (currY - i <= 1){
+                        isGameOver = true;
                         alert("GAME OVER !");
-                        resetBoard();
-                        break;
+                        drawCleanBoard();
+                        return collideType.ceiling;
                     }
                 }
             }
         }
     }
-    var isFull = CheckAndActIfFullRow();
-    if (!isFull && didCollide){
-        markCurrentAsDone();
-        addPoints(false);
-        markCurrentAndNextTetris();
-    }
-    if (isFull){
-        addPoints(true);
-    }
+    return collisionType;
 }
+
 function addPoints(isBonus = false){
-    var scoreElement = document.getElementById("score");
     if (isBonus){
         currentScore += bonusScore;
     }
@@ -386,21 +417,27 @@ function addPoints(isBonus = false){
         const currentPoints = GetCurrentPoints();
         currentScore += currentPoints;
     }
-    scoreElement.innerText = currentScore;
+    updateScore(currentScore);
 }
+
+function updateScore(score){
+    var scoreElement = document.getElementById("score");
+    scoreElement.innerText = score;
+}
+
 function GetCurrentPoints(){
     return current.filter(x => x === 1).length;
 }
+
 function markCurrentAndNextTetris(){
     resetPreviousCurrent();
     current = next;
     next = make_random();
     update_next();
-    // update_current();
     cleanBoard();
     setInitialPosition();
-    drawTetris();
 }
+
 function cleanBoard(){
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -414,7 +451,6 @@ function markCurrentAsDone(){
     const x = position.x;
     const y = position.y;
 
-    resetPreviousCurrent();
     const currentColor = getColorByType();
     for(var i = 0; i < 3; i++){
         for (var j = 0; j < 3; j++){
@@ -431,11 +467,10 @@ function markCurrentAsDone(){
 }
 
 window.onload = function () {
-    resetBoth();
-    drawTetris();
+    resetAll();
 
     document.getElementsByClassName("reset-button")[0].addEventListener("click", function(){
-        resetBoth();
+        resetAll();
         });
 
         document.addEventListener("keydown", (e) => {
@@ -453,9 +488,8 @@ window.onload = function () {
         if (key_code == 40) {
             step = direction.bottom;
         }
-
-        drawTetris(step);
-        });
-
-
+        if (step !== undefined){
+            makeMove(step);
+        }
+    });
 }
