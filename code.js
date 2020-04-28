@@ -103,7 +103,6 @@ nextContainer.style.width =  3 * square_size + "px";
 nextContainer.style.height =  3 * square_size  + "px";
 
 let isGameOver = false;
-
 let currentScore = 0;
 const bonusScore = 500;
 const animationTime = 800;
@@ -184,6 +183,7 @@ function getSquareByXandY(x,y){
 }
 
 function animateDoneRow(){
+    showFireworks();
     let timer = 0;
     const classname = "animation-target";
     for (let y = 0; y < height; y++) {
@@ -203,20 +203,16 @@ function animateDoneRow(){
         }
     }
 }
-function countNumberOfActiveRows(){
-    let count = 0;
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            let rowElement = document.getElementById("row_" + y);
-            const block_type = gameBoard[x][y];
-            if (block_type === squareTypes.done || block_type === squareTypes.current) {
-                count += 1;
-                break;
-            }
-        }
-    }
-    return count;
+function showFireworks(){
+    var fireWorksElement = document.getElementsByClassName("fireworks")[0];
+    setTimeout(() => {
+        fireWorksElement.style.display = "block";
+        setTimeout(() => {
+            fireWorksElement.style.display = "none";
+        },2000);
+}   , 0);
 }
+
 function drawDoneState(){
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -368,6 +364,7 @@ function makeMove(step = null) {
         resetAll();
     }
 }
+
 function drawCurrentTetris(){
     const x = position.x;
     const y = position.y;
@@ -385,6 +382,7 @@ function drawCurrentTetris(){
         }
     }
 }
+
 function didCollide(x,y){
     let collisionType = collideType.notCollide;
     for(var i = 0; i < 3 && collisionType === collideType.notCollide ;i++){
@@ -466,6 +464,28 @@ function markCurrentAsDone(){
     }
 }
 
+function rotate(direction) {
+    let copy = [...current];
+    let map;
+    if (direction === "left"){
+        map = [2, 5, 8, 1, 4, 7, 0, 3, 6] 
+    }
+    else if (direction === "right"){
+        map = [6, 3, 0, 7, 4, 1, 8, 5, 2];
+    }
+    else {
+        return;
+    }
+    current.fill(0);
+    for (let i = 0; i < 9; i++) {
+        current[i] = copy[map[i]];
+    }
+    resetPreviousCurrent();
+    drawCurrentTetris();
+}
+
+
+
 window.onload = function () {
     resetAll();
 
@@ -475,8 +495,19 @@ window.onload = function () {
 
         document.addEventListener("keydown", (e) => {
         const key_code = e.keyCode;
+        const isCtrlPressed = e.ctrlKey;
         let step;
-        // Left
+
+        // ROTATE RIGHT
+        if (key_code == 37 && isCtrlPressed) {
+            this.rotate("left");
+            return;
+        // ROTATE LEFT
+        }if (key_code == 39 && isCtrlPressed) {
+            this.rotate("right");
+            return;
+        }
+        // LEFT
         if (key_code == 37) {
             step = direction.left;
         }
