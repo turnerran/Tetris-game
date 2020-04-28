@@ -1,7 +1,7 @@
 const width = 20; // main game yard height
 const height = 20; // main game yard height
 const gameBoard = new Array(height);
-const square_size = 20; // smallest size of game
+const square_size = 40; // smallest size of game
 const color = {
     background: "rgba(127, 59, 231, 0.89)",
     wall: "MIDNIGHTBLUE",
@@ -209,7 +209,7 @@ function showFireworks(){
         fireWorksElement.style.display = "block";
         setTimeout(() => {
             fireWorksElement.style.display = "none";
-        },2000);
+        },3000);
 }   , 0);
 }
 
