@@ -73,6 +73,9 @@ body {
     background: #000;
     overflow: hidden; 
 }
+.instructions{
+  margin-left: 2rem;
+}
 .fireworks{
   display: none;
 }
