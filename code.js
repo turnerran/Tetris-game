@@ -328,12 +328,18 @@ function makeMove(step = null) {
     if (step === direction.left){
         nextStep = position.x - 1;
         if (nextStep > 1 + (leftEdge ? 0 : -1)){
+            if (didCollideSide(direction.left)){
+                return;
+            }
             position.x = nextStep;
         }
     }
     if (step === direction.right){
         nextStep = position.x + 1;
         if (nextStep < width - 2 + (rightEdge ? 0 : 1)){
+            if (didCollideSide(direction.right)){
+                return;
+            }
             position.x = nextStep;
         }
     }
@@ -405,6 +411,21 @@ function didCollide(x,y){
         }
     }
     return collisionType;
+}
+
+function didCollideSide(side){
+    let res = false;
+    const step = side === direction.left ? -1 : 1;
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                if (gameBoard[x][y] === squareTypes.current) {
+                    if (gameBoard[x + step][y] === squareTypes.done){
+                        return true;
+                    }
+                }
+            }
+        }
+    return false;
 }
 
 function addPoints(isBonus = false){
@@ -488,7 +509,7 @@ function rotate(direction) {
 
 window.onload = function () {
     resetAll();
-
+    setInterval(this.makeMove, 1000, direction.bottom);
     document.getElementsByClassName("reset-button")[0].addEventListener("click", function(){
         resetAll();
         });
